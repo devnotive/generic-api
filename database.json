@@ -1,0 +1,15 @@
+{
+    "development":{
+        "ENV": "PURPLE_VEST_DATABASE_URL"
+    },
+    "staging": {
+        "ENV": "PURPLE_VEST_DATABASE_URL"
+    },
+    "production":{
+        "ENV": "PURPLE_VEST_DATABASE_URL"
+    },
+    "defaultEnv":{
+        "ENV": "PURPLE_VEST_NODE_ENV"
+    },
+    "sql-file": true
+}
