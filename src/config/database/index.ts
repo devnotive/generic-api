@@ -5,28 +5,28 @@ import Logger from '../logger';
 import * as process from 'process';
 
 export const sqlQuest: SqlQuest = sqlQuestFactory({
-    databaseUrl: Env.get<string>('DATABASE_URL'),
+  databaseUrl: Env.get<string>('DATABASE_URL'),
 });
 
 let retry = 3;
 
 export async function connectDB(): Promise<SqlQuest> {
-    const logger = new Logger(connectDB.name);
+  const logger = new Logger(connectDB.name);
 
-    const [, err] = await Deasyncify.watch(sqlQuest.connect());
+  const [, err] = await Deasyncify.watch(sqlQuest.connect());
 
-    if (err != null) {
-        logger.error(err);
-        if (retry > 0) {
-            logger.log(`Error connecting to database, retrying... (${retry} left)`);
-            retry -= 1;
-            await connectDB();
-        }
-
-        process.exit(1);
+  if (err != null) {
+    logger.error(err);
+    if (retry > 0) {
+      logger.log(`Error connecting to database, retrying... (${retry} left)`);
+      retry -= 1;
+      await connectDB();
     }
 
-    logger.log('Connected to postgres database');
+    process.exit(1);
+  }
 
-    return sqlQuest;
+  logger.log('Connected to postgres database');
+
+  return sqlQuest;
 }

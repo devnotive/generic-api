@@ -1,5 +1,6 @@
 import { BaseEntity } from '../index';
-import { UserType } from '../../enums';
+import { UserType } from 'aws-sdk/clients/chime';
+// import { UserType } from '../../enums';
 
 export interface UserAccount extends BaseEntity {
   fullName: string;

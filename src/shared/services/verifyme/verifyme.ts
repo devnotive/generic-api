@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { apiConstants } from '../../utils/constants';
 import Env from '../../../shared/utils/env';
-import { CacDocumentType } from '../../../shared/enums';
 import Logger from '../../../config/logger';
 
 const { __test__, __verifyme__ } = apiConstants;
@@ -108,27 +107,6 @@ export class VerifyMeService {
     return __test__ ? {} : axios.post(url, data, { headers });
   }
 
-  static async verifyCac(
-    document: string,
-    type: CacDocumentType,
-    env: string,
-  ): Promise<any> {
-    const authorize = await this.authorize();
-    const headers = { Authorization: `Bearer ${authorize.data.accessToken}` };
-    const docType =
-      type === CacDocumentType.rcNumber ? 'limited_company' : 'Business';
-    const url = `${baseUrl}/v1/ng/identities/cac-basic`;
-    console.log(`Env: ${env}`);
-    const data =
-      __verifyme__ === env
-        ? {
-            regNumber: 'BN200002',
-            type: 'Business',
-          }
-        : { regNumber: document, type: docType };
-    console.log(data);
-    return __test__ ? {} : axios.post(url, data, { headers });
-  }
 
   static async getBanks(): Promise<any> {
     const authorize = await this.authorize();
