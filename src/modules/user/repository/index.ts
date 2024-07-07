@@ -41,7 +41,6 @@ export class UserRepository {
         email,
         phoneNumber,
         password,
-        request.accountType,
       ]);
 
       return user;

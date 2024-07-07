@@ -2,7 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "com.enyata.purple_pay.my_purple_pay",
+    "package_name": "com.envern.generic_project.generic_project",
     "sha256_cert_fingerprints":
     ["85:32:9E:A9:15:59:70:85:6E:D6:9E:2B:5F:5E:A3:59:2F:DA:72:DA:AA:62:8E:92:20:E7:D9:6D:AE:11:54:2A"]
   }

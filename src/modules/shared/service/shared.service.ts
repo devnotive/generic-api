@@ -149,7 +149,7 @@
 //         throw new ApiError(StatusCodes.NOT_FOUND, 'Wallet not found');
 //       }
 //
-//       // credit user wallet and debit purple vest wallet, create entries in transactionLedger then update individual wallets
+//       // credit user wallet and debit generic project wallet, create entries in transactionLedger then update individual wallets
 //       const fundedWallet = await SharedRepository.fundWallet(
 //         walletId,
 //         amount,

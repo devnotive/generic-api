@@ -1,0 +1,1 @@
+ALTER TABLE "File" DROP CONSTRAINT IF EXISTS "File_userId_fkey"

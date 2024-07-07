@@ -39,7 +39,7 @@ export const apiConstants = {
   ACTIVATE: 'activate',
   ROLE_HAS_USERS:
     'Sorry, unable to deactivate role. Users are currently assigned to this role',
-  DEV_FRONTEND_LINK: 'https://purple-vest.enyata.com/auth/create-password',
+  // DEV_FRONTEND_LINK: 'https://generic-project.envern.com/auth/create-password',
   OTP_MAIL_SUBJECT: 'Password Reset OTP',
   ACTIVE: 'active',
   INACTIVE: 'inactive',
@@ -52,7 +52,7 @@ export const apiConstants = {
   CANNOT_FETCH_COMMUNITIES: 'Error fetching savings details',
   COMMUNITY_FETCHED: 'Community fetched successfully',
   COMMUNITY_NOT_FOUND: 'Community not found',
-  PARTICPANTS_FETCHED: 'Participants fetched',
+  PARTICIPANTS_FETCHED: 'Participants fetched',
   GENERIC_SUCCESS: 'Request successful',
   CANNOT_REMOVE_OWNER: 'Cannot remove owner',
   MEMBER_LIMIT: (count: string) =>
