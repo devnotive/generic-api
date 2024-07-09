@@ -22,4 +22,3 @@ jobs:
       run: |
         npm install
         npm run build
-        pm2 restart generic-project-backend
