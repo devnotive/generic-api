@@ -1,11 +1,7 @@
-name: NodeJS with Gulp
-
+name: Node.js CD
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+    branches: [ main ]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,8 +20,13 @@ jobs:
 
     - name: Build
       run: |
+        cd generic-project-backend
+        git add .
+        git stash
+        git pull origin main
+        git stash pop
         npm install
         npm run build
-    - name: Test
-      run: |
-        npm run test
+        pm2 restart generic-project-backend
+
+
