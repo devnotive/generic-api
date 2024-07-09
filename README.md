@@ -1,4 +1,4 @@
-# generic-project-backend
+# generic-api
 An API template in nodejs/typescript with sign up and login already setup.
 
 ## Setup
