@@ -1,7 +1,9 @@
 # generic-project-backend
-Begin by including .idea in .gitignore
+An API template in nodejs/typescript with sign up and login already setup.
 
 ## Setup
+
+Begin by including .idea in .gitignore
 
 Make sure to install the dependencies:
 
