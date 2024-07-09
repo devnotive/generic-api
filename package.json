@@ -19,7 +19,7 @@
     "db:reset": "npm run seed:reset && npm run migrate:reset && npm run migrate:up && npm run seed:up",
     "lint": "eslint \"{src,apps,libs}/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "test": "cross-env PURPLE_VEST_NODE_ENV=test PURPLE_VEST_SECRET=PURPLEVESTSECRET nyc mocha -r ts-node/register src/**/*.test.ts --exclude src/config/**/*.ts --timeout 15000 --exit",
+    "test": "cross-env GENERIC_PROJECT_NODE_ENV=test GENERIC_PROJECT_SECRET=GENERICPROJECTSECRET nyc mocha -r ts-node/register src/**/*.test.ts --exclude src/config/**/*.ts --timeout 15000 --exit",
     "test:e2e": "jest --config ./tests/jest-e2e.json",
     "prepare": "husky install"
   },

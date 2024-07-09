@@ -1,34 +1,61 @@
-import { ApiError } from '../../../shared/utils/api.error';
+import { UserAccount } from '../../../shared/types/user/userAccount';
+import { sqlQuest } from '../../../config/database';
 import Logger from '../../../config/logger';
-import { UserRepository } from '../repository';
+import { userQueries } from '../queries';
 import {
   CreateUserValidator,
   ForgotPasswordValidator,
   LoginValidator,
   ResetPasswordValidator,
   SendPhoneNumberOtpValidator,
-  UpdateIndividualContactInfoValidator,
-  UpdateOrganizationContactInfoValidator,
-  VerifyOrganizationRepInfoValidator,
-  VerifyAccountValidator,
-  VerifyAddressInfoValidator,
-  VerifyCacDocument,
   VerifyForgotPasswordOtpValidator,
-  VerifyIndividualContactInfoValidator,
-  VerifyOrganizationContactInfoValidator,
   VerifyPhoneNumberOtpValidator,
-  VerifyUserBankAccountValidator,
-  FetchTransactionHistoryValidator,
+  // UpdateIndividualContactInfoValidator,
+  // UpdateOrganizationContactInfoValidator,
+  // VerifyOrganizationRepInfoValidator,
+  // // VerifyAccountValidator,
+  // VerifyAddressInfoValidator,
+  // VerifyIndividualContactInfoValidator,
+  // VerifyOrganizationContactInfoValidator,
+  // FetchTransactionHistoryValidator,
 } from '../validation';
-import { StatusCodes } from 'http-status-codes';
 import { GenericHelper } from '../../../shared/helpers/generic.helper';
+import // CacDocumentType,
+// OnboardingVerifiedStatus,
+// VerifyDocument,
+'../../../shared/enums';
 import Env from '../../../shared/utils/env';
-// import { OnboardingVerifiedStatus } from '../../../shared/enums';
+import { UserRepository } from '../repository';
+import { StatusCodes } from 'http-status-codes';
+// import { VerifyMeService } from '../../../shared/services/verifyme/verifyme';
+// import { HttpService } from '../../../shared/services/http';
+import { ApiError } from '../../../shared/utils/api.error';
 import { UserAccountDTO } from '../../../shared/types/user/userAccount';
+// import { PayStackService } from '../../../shared/services/paystack/paystack';
 import * as jwt from 'jsonwebtoken';
 
-const _logger = new Logger('User.Service');
+const _logger = new Logger('User.Repository');
 export class UserService {
+  static checkIfUserExists = async (
+    email: string,
+    phoneNumber: string,
+    userName: string,
+  ): Promise<UserAccount> => {
+    try {
+      const userExists = await sqlQuest.oneOrNone(
+        userQueries.checkIfUserExists,
+        [email, phoneNumber, userName],
+      );
+      return userExists;
+    } catch (err) {
+      _logger.error(
+        '[UserRepository]::Something went wrong when checking if user exists',
+        err,
+      );
+      throw err;
+    }
+  };
+
   static createUser = async (request: CreateUserValidator): Promise<any> => {
     try {
       const { email, phoneNumber, userName } = request;
@@ -53,12 +80,6 @@ export class UserService {
       request.password = hashedText;
 
       const user = await UserRepository.createUser(request);
-      const wallet = await UserRepository.createWallet(user.id);
-      _logger.log(
-        `Wallet created successfully for user with id: ${
-          user.id
-        } - ${JSON.stringify(wallet)}`,
-      );
       return user;
     } catch (err) {
       _logger.error(
@@ -90,7 +111,6 @@ export class UserService {
       throw err;
     }
   };
-
   static verifyPhoneNumberOtp = async (
     request: VerifyPhoneNumberOtpValidator,
   ): Promise<UserAccountDTO> => {
@@ -109,199 +129,10 @@ export class UserService {
       if (!isOtpValid) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid OTP');
       }
-
-      const userDetails =
-        await UserRepository.updateOnboardingVerificationStatus(
-          user.id,
-          OnboardingVerifiedStatus.PhoneNumber,
-        );
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { otp: _, ...userInfo } = userDetails;
-      return userInfo;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when verifying phone number otp',
-      );
-      throw err;
-    }
-  };
-
-  static updateIndividualContactInfo = async (
-    request: UpdateIndividualContactInfoValidator,
-  ): Promise<UserAccountDTO> => {
-    try {
-      const { id } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-
-      await UserRepository.updateIndividualContactInfo(request);
-
-      const updatedUser =
-        await UserRepository.updateOnboardingVerificationStatus(
-          user.id,
-          OnboardingVerifiedStatus.Contact,
-        );
-      return updatedUser;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when updating individual contact info',
-        err,
-      );
-      throw err;
-    }
-  };
-
-  static verifyIndividualContactInfo = async (
-    request: VerifyIndividualContactInfoValidator,
-  ): Promise<void> => {
-    try {
-      const { id } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-
-      await UserRepository.verifyIndividualContactInfo(request, user);
-      return;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when verifying individual contact info',
-        err,
-      );
-      throw err;
-    }
-  };
-
-  static verifyUserAddressInfo = async (
-    request: VerifyAddressInfoValidator,
-  ): Promise<any> => {
-    try {
-      const { id } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-
-      const updatedUser = await UserRepository.verifyAddressInfo(request, user);
-      return updatedUser;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when verifying individual contact info',
-        err,
-      );
-      throw err;
-    }
-  };
-  static verifyOrganizationRepInfo = async (
-    request: VerifyOrganizationRepInfoValidator,
-  ): Promise<any> => {
-    try {
-      const { id } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-
-      const updatedUser = await UserRepository.verifyOrganizationRepInfo(
-        request,
-        user,
-      );
-      return updatedUser;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when verifying organization representative info',
-        err,
-      );
-      throw err;
-    }
-  };
-
-  static updateOrganizationContactInfo = async (
-    request: UpdateOrganizationContactInfoValidator,
-  ): Promise<UserAccountDTO> => {
-    try {
-      const { id } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-
-      await UserRepository.updateOrganizationContactInfo(request);
-
-      const updatedUser =
-        await UserRepository.updateOnboardingVerificationStatus(
-          user.id,
-          OnboardingVerifiedStatus.Contact,
-        );
-      return updatedUser;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when updating organization contact info',
-      );
-      throw err;
-    }
-  };
-
-  static verifyOrganizationContactInfo = async (
-    request: VerifyOrganizationContactInfoValidator,
-  ): Promise<void> => {
-    try {
-      const { id } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-
-      await UserRepository.verifyOrganizationContactInfo(request, user);
-      return;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when verifying organization contact info',
-      );
-      throw err;
-    }
-  };
-
-  static verifyAccount = async (
-    request: VerifyAccountValidator,
-  ): Promise<void> => {
-    try {
-      _logger.log(`Verifying user documents with request: ${request}`);
-      const { id } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-
-      const response = await UserRepository.verifyUserDocuments(request, user);
-      _logger.log('User documents verified successfully');
-      return response;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when verifying account',
-      );
-      throw err;
-    }
-  };
-
-  static updateAccountDocuments = async (
-    request: VerifyAccountValidator,
-  ): Promise<UserAccountDTO> => {
-    try {
-      const { id } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-
-      await UserRepository.updateUserDocuments(request);
-
       return user;
     } catch (err) {
       _logger.error(
-        '[UserService]::Something went wrong when verifying account',
+        '[UserService]::Something went wrong when verifying phone number otp',
       );
       throw err;
     }
@@ -345,7 +176,6 @@ export class UserService {
         { expiresIn: '1d', algorithm: 'HS256' },
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...userDetails } = user;
       return { ...userDetails, token };
     } catch (err) {
@@ -354,38 +184,353 @@ export class UserService {
     }
   };
 
-  static getUserById = async (userId: string): Promise<any> => {
+  static getUserById = async (userId: string): Promise<UserAccount> => {
     try {
-      const user = await UserRepository.getUserById(userId);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-      return {
-        id: user.id,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        userName: user.userName,
-        fullName: user.fullName,
-        userType: user.userType,
-        hasVerifiedPhoneNumber: user.hasVerifiedPhoneNumber,
-        hasVerifiedContact: user.hasVerifiedContact,
-        hasVerifiedNin: user.hasVerifiedNin,
-        hasVerifiedDriversLicense: user.hasVerifiedDriversLicense,
-        hasVerifiedPassport: user.hasVerifiedPassport,
-        hasVerifiedBankAccount: user.hasVerifiedBankAccount,
-        hasVerifiedBvn: user.hasVerifiedBvn,
-        hasVerifiedAddress: user.hasVerifiedAddress,
-        hasVerifiedCac: user.hasVerifiedCac,
-      };
+      const user = await sqlQuest.oneOrNone(userQueries.getUserById, [userId]);
+      _logger.log(`User from get user by id: ${JSON.stringify(user)}`);
+      return user;
     } catch (err) {
       _logger.error(
-        '[UserService]::Something went wrong when getting user by id',
+        '[UserRepository]::Something went wrong when getting user by id',
         err,
       );
       throw err;
     }
   };
 
+  // static updateOnboardingVerificationStatus = async (
+  //   userId: string,
+  //   type: OnboardingVerifiedStatus,
+  // ): Promise<UserAccount> => {
+  //   try {
+  //     const status = await sqlQuest.one(
+  //       userQueries.updateOnboardingVerificationStatus,
+  //       [userId, type],
+  //     );
+  //     return status;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when updating onboarding verification status',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+
+  // static updateIndividualContactInfo = async (
+  //   request: UpdateIndividualContactInfoValidator,
+  // ): Promise<void> => {
+  //   try {
+  //     const {
+  //       id,
+  //       streetName,
+  //       stateName,
+  //       lgaName,
+  //       bankName,
+  //       bvnNumber,
+  //       accountNumber,
+  //     } = request;
+  //
+  //     await sqlQuest.none(userQueries.updateIndividualContactInfo, [
+  //       id,
+  //       streetName,
+  //       lgaName,
+  //       stateName,
+  //       bankName,
+  //       bvnNumber,
+  //       accountNumber,
+  //     ]);
+  //     return;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when updating individual contact info',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+
+  // static verifyIndividualContactInfo = async (
+  //   request: VerifyIndividualContactInfoValidator,
+  //   user: UserAccount,
+  // ): Promise<void> => {
+  //   try {
+  //     const { bvnNumber } = request;
+  //     const { fullName, phoneNumber } = user;
+  //     const [firstName, lastName] = fullName.split(' ');
+  //
+  //     const verifyRequest = VerifyMeService.verifyBvn(
+  //       bvnNumber,
+  //       firstName,
+  //       lastName,
+  //       phoneNumber,
+  //       'test',
+  //     );
+  //
+  //     const verifyResponse = await HttpService.req(verifyRequest);
+  //     if (verifyResponse?.status !== 200) {
+  //       throw new ApiError(verifyResponse?.status, verifyResponse?.message);
+  //     }
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying individual contact info',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+
+  // static verifyAddressInfo = async (
+  //   request: VerifyAddressInfoValidator,
+  //   user: UserAccount,
+  // ): Promise<any> => {
+  //   try {
+  //     const { stateName, streetName, lgaName, city } = request;
+  //
+  //     const updatedUser = await sqlQuest.one(userQueries.updateAddressInfo, [
+  //       user.id,
+  //       streetName,
+  //       lgaName,
+  //       stateName,
+  //       city,
+  //     ]);
+  //     return updatedUser;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying individual contact info',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+  // static verifyOrganizationRepInfo = async (
+  //   request: VerifyOrganizationRepInfoValidator,
+  //   user: UserAccount,
+  // ): Promise<any> => {
+  //   try {
+  //     const { authorizedRepName, officialEmailAddress, staffLoanEligibility } =
+  //       request;
+  //
+  //     const updatedUser = await sqlQuest.one(
+  //       userQueries.updateOrganizationRepInfo,
+  //       [
+  //         user.id,
+  //         authorizedRepName,
+  //         officialEmailAddress,
+  //         staffLoanEligibility,
+  //       ],
+  //     );
+  //     return updatedUser;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying organization representative info',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+
+  // static verifyOrganizationContactInfo = async (
+  //   request: VerifyOrganizationContactInfoValidator,
+  //   user: UserAccount,
+  // ): Promise<void> => {
+  //   try {
+  //     const { bnNumber, rcNumber } = request;
+  //     const { fullName, phoneNumber } = user;
+  //     const [firstName, lastName] = fullName.split(' ');
+  //
+  //     const bvnRequest = VerifyMeService.verifyBvn(
+  //       bnNumber,
+  //       firstName,
+  //       lastName,
+  //       phoneNumber,
+  //       'test',
+  //     );
+  //
+  //
+  //
+  //     const bvnResponse = await HttpService.req(bvnRequest);
+  //     if (bvnResponse?.status !== 200) {
+  //       throw new ApiError(bvnResponse?.status, bvnResponse?.message);
+  //     }
+  //
+  //
+  //     return;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying individual contact info',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+
+  // static updateOrganizationContactInfo = async (
+  //   request: UpdateOrganizationContactInfoValidator,
+  // ): Promise<void> => {
+  //   try {
+  //     const {
+  //       id,
+  //       streetName,
+  //       stateName,
+  //       lgaName,
+  //       rcNumber,
+  //       bnNumber,
+  //       bankName,
+  //       accountNumber,
+  //     } = request;
+  //
+  //     await sqlQuest.none(userQueries.updateOrganizationContactInfo, [
+  //       id,
+  //       streetName,
+  //       lgaName,
+  //       stateName,
+  //       rcNumber,
+  //       bnNumber,
+  //       bankName,
+  //       accountNumber,
+  //     ]);
+  //     return;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when updating organization contact info',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+
+  // static updateUserDocuments = async (
+  //   request: VerifyAccountValidator,
+  // ): Promise<void> => {
+  //   try {
+  //     const { id, verificationType, document } = request;
+  //
+  //     await sqlQuest.none(userQueries.updateUserDocuments, [
+  //       id,
+  //       verificationType,
+  //       document,
+  //     ]);
+  //     return;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when updating user documents',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+
+  // static verifyDriversLicense = async (
+  //   document: string,
+  //   fullName: string,
+  //   env: string,
+  // ): Promise<any> => {
+  //   try {
+  //     const [firstname, lastname] = fullName.split(' ');
+  //     const request = VerifyMeService.verifyDriversLicense(
+  //       document,
+  //       firstname,
+  //       lastname,
+  //       env,
+  //     );
+  //     _logger.log(`Drivers license request: ${JSON.stringify(request)}`);
+  //     return this.requestCall(request);
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying drivers license',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+
+  // static verifyNin = async (
+  //   document: string,
+  //   fullName: string,
+  //   env: string,
+  // ): Promise<any> => {
+  //   try {
+  //     const [firstName, lastName] = fullName.split(' ');
+  //     const request = VerifyMeService.verifyNin(
+  //       document,
+  //       firstName,
+  //       lastName,
+  //       env,
+  //     );
+  //     _logger.log(`Nin request: ${JSON.stringify(request)}`);
+  //
+  //     return this.requestCall(request);
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying nin',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+  //
+  // private static requestCall = async (request: any): Promise<any> => {
+  //   const response = await HttpService.req(request);
+  //   _logger.log(`Nin request made`);
+  //   if (response?.status !== 200) {
+  //     const { status, message } = response;
+  //     throw new ApiError(status, message);
+  //   }
+  //   const { id, summary, status } = response.data;
+  //   return { id, summary, status };
+  // };
+  //
+  // static verifyBvn = async (
+  //   document: string,
+  //   fullName: string,
+  //   phoneNumber: string,
+  //   env: string,
+  // ): Promise<any> => {
+  //   try {
+  //     const [firstname, lastname] = fullName.split(' ');
+  //     const request = VerifyMeService.verifyBvn(
+  //       document,
+  //       firstname,
+  //       lastname,
+  //       phoneNumber,
+  //       env,
+  //     );
+  //     _logger.log(`Bvn request: ${JSON.stringify(request)}`);
+  //
+  //     return this.requestCall(request);
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying bvn',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+
+  // static verifyPassport = async (
+  //   document: string,
+  //   fullName: string,
+  //   env: string,
+  // ): Promise<any> => {
+  //   try {
+  //     const [firstName, lastName] = fullName.split(' ');
+  //     const request = VerifyMeService.verifyPassport(
+  //       document,
+  //       firstName,
+  //       lastName,
+  //       env,
+  //     );
+  //     return this.requestCall(request);
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying passport',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
+  //
   static forgotPassword = async (
     request: ForgotPasswordValidator,
   ): Promise<any> => {
@@ -406,6 +551,31 @@ export class UserService {
     }
   };
 
+  static resetPassword = async (
+    request: ResetPasswordValidator,
+  ): Promise<any> => {
+    try {
+      const { email, password } = request;
+      const { hashedText } = await GenericHelper.hashText(
+        password,
+        Env.get('SALT_ROUNDS'),
+      );
+
+      const user = await UserRepository.getUserByEmail(email);
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+      }
+
+      await UserRepository.resetPassword(user.id, hashedText);
+
+      return;
+    } catch (err) {
+      _logger.error(
+        '[UserService]::Something went wrong when resetting password',
+      );
+      throw err;
+    }
+  };
   static verifyForgotPasswordOtp = async (
     request: VerifyForgotPasswordOtpValidator,
   ): Promise<any> => {
@@ -436,228 +606,268 @@ export class UserService {
     }
   };
 
-  static resetPassword = async (
-    request: ResetPasswordValidator,
-  ): Promise<any> => {
-    try {
-      const { email, password } = request;
-      const { hashedText } = await GenericHelper.hashText(
-        password,
-        Env.get('SALT_ROUNDS'),
-      );
+  // static getUserNameSuggestions = async (
+  //   suggestions: string[],
+  // ): Promise<string[]> => {
+  //   try {
+  //     const available = await sqlQuest.manyOrNone(
+  //       userQueries.getUserNameSuggestions,
+  //       [suggestions],
+  //     );
+  //     return available.map(
+  //       (suggestion: { suggestion: string }) => suggestion.suggestion,
+  //     );
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when getting username suggestions',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
 
-      const user = await UserRepository.getUserByEmail(email);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
+  // static getBanks = async () => {
+  //   try {
+  //     const request = VerifyMeService.getBanks();
+  //     const response = await HttpService.req(request);
+  //     if (response?.status !== 200) {
+  //       throw new ApiError(response?.status, response?.message);
+  //     }
+  //     const { data: banks } = response;
+  //     return banks;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when getting banks',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
 
-      await UserRepository.resetPassword(user.id, hashedText);
+  // static verifyBankAccount = async (
+  //   accountNumber: string,
+  //   bankCode: string,
+  //   fullName: string,
+  //   env: string,
+  // ) => {
+  //   try {
+  //     const [firstname, lastname] = fullName.split(' ');
+  //     const request = VerifyMeService.verifyBankAccountDetails(
+  //       firstname,
+  //       lastname,
+  //       accountNumber,
+  //       bankCode,
+  //       env,
+  //     );
+  //     const response = await HttpService.req(request);
+  //     if (response?.status !== 200) {
+  //       throw new ApiError(response?.status, response?.message);
+  //     }
+  //     const { id, metadata, nuban, status } = response.data;
+  //     const { accountName, accountCurrency } = nuban;
+  //     return { id, ...metadata, accountName, accountCurrency, status };
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying bank account',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
 
-      return;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when resetting password',
-      );
-      throw err;
-    }
-  };
+  // static verifyCac = async (
+  //   document: string,
+  //   type: CacDocumentType,
+  //   env: string,
+  // ): Promise<any> => {
+  //   try {
+  //     const request = VerifyMeService.verifyCac(document, type, env);
+  //     const response = await HttpService.req(request);
+  //     if (response?.status !== 200) {
+  //       throw new ApiError(response?.status, response?.message);
+  //     }
+  //     _logger.log(
+  //       `Cac verified successfully - ${document} - ${JSON.stringify(
+  //         response.data,
+  //       )}`,
+  //     );
+  //     const { id, summary, status } = response.data;
+  //     return { id, summary, status };
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying cac document',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
 
-  static checkIfUserNameIsAvailable = async (
-    userName: string,
-  ): Promise<{ isAvailable: boolean }> => {
-    try {
-      const user = await UserRepository.getUserByUserName(userName);
-      return { isAvailable: !user };
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when checking if user name is available',
-      );
-      throw err;
-    }
-  };
+  // static createWallet = async (userId: string) => {
+  //   try {
+  //     const wallet = await sqlQuest.one(userQueries.createWallet, [
+  //       GenericHelper.generateId(),
+  //       userId,
+  //     ]);
+  //     return wallet;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when creating wallet',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
 
-  static getUserNameSuggestions = async (
-    fullName: string,
-  ): Promise<string[]> => {
-    try {
-      const cleanFullName = fullName
-        .replace(/[^a-zA-Z0-9\s]/g, '')
-        .toLowerCase();
-      const suggestions = [];
-      _logger.log(
-        `[UserService]::Getting user name suggestions for ${fullName}`,
-      );
-      _logger.log(`[UserService]::Clean full name: ${cleanFullName}`);
+  // static fetchTransactionHistory = async (
+  //   id: string,
+  //   {
+  //     date,
+  //     type,
+  //     search,
+  //     status,
+  //     page = 1,
+  //     limit = 10,
+  //   }: FetchTransactionHistoryValidator,
+  // ) => {
+  //   try {
+  //     _logger.log(
+  //       `[UserRepository::fetchTransactionHistory]::Fetching transaction history for ${id} with query params - ${JSON.stringify(
+  //         { date, type, search, page, limit },
+  //       )},`,
+  //     );
+  //
+  //     const paramValues: string[] = [];
+  //     const conditions: string[] = [];
+  //
+  //     paramValues.push(id);
+  //
+  //     if (search) {
+  //       paramValues.push(search);
+  //       conditions.push(
+  //         `(
+  //         "transactionCategory" ILIKE '%' || $${paramValues.length} || '%'
+  //         OR "transactionDescription" ILIKE '%' || $${paramValues.length} || '%'
+  //         OR "transactionStatus" ILIKE '%' || $${paramValues.length} || '%'
+  //         OR "planName" ILIKE '%' || $${paramValues.length} || '%'
+  //         )`,
+  //       );
+  //     }
+  //
+  //     if (status) {
+  //       paramValues.push(status);
+  //       conditions.push(`"transactionStatus" = $${paramValues.length}`);
+  //     }
+  //
+  //     if (type) {
+  //       paramValues.push(type);
+  //       conditions.push(`(
+  //         "transactionCategory" = $${paramValues.length}
+  //         OR
+  //         "savingsType" = $${paramValues.length}
+  //         )`);
+  //     }
+  //
+  //     if (date) {
+  //       paramValues.push(date.toString());
+  //       conditions.push(`(
+  //         EXTRACT(DAY FROM "createdAt"::date) = EXTRACT(DAY FROM $${paramValues.length}::date)
+  //         AND EXTRACT(MONTH FROM "createdAt"::date) = EXTRACT(MONTH FROM $${paramValues.length}::date)
+  //         AND EXTRACT(YEAR FROM "createdAt"::date) = EXTRACT(YEAR FROM $${paramValues.length}::date)
+  //         )`);
+  //     }
+  //
+  //     const whereClause =
+  //       conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
+  //
+  //     const fetchQuery =
+  //       userQueries.fetchTransactionHistory +
+  //       whereClause +
+  //       ` OFFSET $${paramValues.length + 1} LIMIT $${paramValues.length + 2};`;
+  //
+  //     const countQuery = userQueries.countFetchTransactionHistory + whereClause;
+  //
+  //     _logger.log(`Fetch query: ${fetchQuery}\n`);
+  //     _logger.log(`Count query: ${countQuery}\n`);
+  //
+  //     _logger.log(`Param values: ${paramValues}\n`);
+  //
+  //     return await GenericHelper.paginatedData(
+  //       fetchQuery,
+  //       countQuery,
+  //       page,
+  //       limit,
+  //       paramValues,
+  //     );
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when fetching transaction history',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
 
-      // Check if fullName consists of more than one name
-      const names = cleanFullName.split(' ');
-      _logger.log(`[UserService]::Names: ${names}`);
-      if (names.length > 1) {
-        const cleanFirstName = names[0];
-        const cleanLastName = names[names.length - 1];
+  // static readonly getBanksPaystack = async () => {
+  //   try {
+  //     const request = PayStackService.getBanks();
+  //     const response = await HttpService.req(request);
+  //     if (response?.status !== 200) {
+  //       throw new ApiError(response?.status, response?.message);
+  //     }
+  //     const { data: banks } = response;
+  //     return banks;
+  //   } catch (err) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when getting banks',
+  //       err,
+  //     );
+  //     throw err;
+  //   }
+  // };
 
-        suggestions.push(`${cleanFirstName}${cleanLastName}`);
-        suggestions.push(`${cleanFirstName}.${cleanLastName}`);
-        suggestions.push(`${cleanFirstName}_${cleanLastName}`);
-        suggestions.push(`${cleanFirstName}-${cleanLastName}`);
-        suggestions.push(`${cleanFirstName}${cleanLastName.slice(0, 1)}`);
-        suggestions.push(
-          `${cleanFirstName}${cleanLastName.slice(0)}${cleanLastName.slice(
-            -1,
-          )}`,
-        );
-        suggestions.push(`${cleanFirstName}${cleanLastName.slice(-2)}`);
-        suggestions.push(
-          `${cleanFirstName}${GenericHelper.generateRandomNumber(2)}`,
-        );
-        suggestions.push(
-          `${cleanFirstName}.${GenericHelper.generateRandomNumber(2)}`,
-        );
-        suggestions.push(
-          `${cleanFirstName}_${GenericHelper.generateRandomNumber(2)}`,
-        );
-        suggestions.push(
-          `${cleanFirstName}-${GenericHelper.generateRandomNumber(2)}`,
-        );
-      } else {
-        const cleanName = names[0];
-        _logger.log(`[UserService]::Clean name: ${cleanName}`);
-        suggestions.push(`${cleanName}`);
-        suggestions.push(
-          `${cleanName}${GenericHelper.generateRandomNumber(2)}`,
-        );
-        suggestions.push(
-          `${cleanName}.${GenericHelper.generateRandomNumber(2)}`,
-        );
-        suggestions.push(
-          `${cleanName}_${GenericHelper.generateRandomNumber(2)}`,
-        );
-        suggestions.push(`${cleanName}_`);
-      }
+  // static readonly verifyBankAccountPaystack = async (
+  //   accountNum: string,
+  //   bankCode: string,
+  // ) => {
+  //   try {
+  //     const request = PayStackService.verifyBankAccount(accountNum, bankCode);
+  //
+  //     const response = await HttpService.req(request);
+  //     if (response?.status !== 200) {
+  //       throw new ApiError(response?.status, response?.message);
+  //     }
+  //
+  //     console.log(response.data);
+  //
+  //     const { account_name: accountName, account_number: accountNumber } =
+  //       response.data.data;
+  //     _logger.log(
+  //       `Account name: ${accountName}, Account number: ${accountNumber}`,
+  //     );
+  //     return { accountName, accountNumber };
+  //   } catch (error) {
+  //     _logger.error(
+  //       '[UserRepository]::Something went wrong when verifying bank account',
+  //       error,
+  //     );
+  //     throw error;
+  //   }
+  // };
 
-      const availableSuggestions = await UserRepository.getUserNameSuggestions(
-        suggestions,
-      );
-      return availableSuggestions;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when getting user name suggestions',
-      );
-      throw err;
-    }
-  };
-
-  static getBanks = async (): Promise<any> => {
-    try {
-      const banks = await UserRepository.getBanksPaystack();
-      return banks;
-    } catch (err) {
-      _logger.error(
-        '[UserService ]::Something went wrong when getting banks',
-        err,
-      );
-      throw err;
-    }
-  };
-
-  static verifyUserBankAccount = async (
-    request: VerifyUserBankAccountValidator,
-  ): Promise<any> => {
-    try {
-      const { accountNumber, bankCode, bankName, id, env } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-      const { fullName } = user;
-
-      _logger.log(
-        `Verifying user bank account with request: ${request}, user name: ${fullName} and env: ${env}`,
-      );
-      const { accountName } = await UserRepository.verifyBankAccountPaystack(
-        accountNumber,
-        bankCode,
-      );
-
-      await UserRepository.updateBankAccountDetails(
-        id,
-        accountName,
-        accountNumber,
-        bankCode,
-        bankName,
-      );
-
-      const verifiedUser =
-        await UserRepository.updateOnboardingVerificationStatus(
-          user.id,
-          OnboardingVerifiedStatus.BankAccount,
-        );
-
-      return verifiedUser;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when verifying user bank account',
-        err,
-      );
-      throw err;
-    }
-  };
-
-  static verifyCacDocument = async (
-    request: VerifyCacDocument,
-  ): Promise<any> => {
-    try {
-      const { id, documentId, documentType, env } = request;
-      const user = await UserRepository.getUserById(id);
-      if (!user) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
-      }
-
-      _logger.log(
-        `Verifying user cac document with request: ${JSON.stringify(request)}}`,
-      );
-
-      await UserRepository.verifyCac(documentId, documentType, env);
-
-      const verifiedUser =
-        await UserRepository.updateOnboardingVerificationStatus(
-          user.id,
-          OnboardingVerifiedStatus.Cac,
-        );
-
-      return verifiedUser;
-    } catch (err) {
-      _logger.error(
-        '[UserService]::Something went wrong when verifying user cac document',
-        err,
-      );
-      throw err;
-    }
-  };
-
-  static fetchTransactionHistory = async (
-    id: string,
-    body: FetchTransactionHistoryValidator,
-  ): Promise<any> => {
-    try {
-      _logger.log(
-        `Fetching transaction history for user with id: ${id} with body: ${JSON.stringify(
-          body,
-        )}  `,
-      );
-
-      const transactions = await UserRepository.fetchTransactionHistory(
-        id,
-        body,
-      );
-
-      return transactions;
-    } catch (error) {
-      _logger.error(
-        '[UserService::fetchTransactionHistory ] Something went wrong when fetching transaction history',
-        error,
-      );
-      throw error;
-    }
-  };
+  // static readonly updateBankAccountDetails = async (
+  //   id: string,
+  //   accountName: string,
+  //   accountNumber: string,
+  //   bankCode: string,
+  //   bankName: string,
+  // ) => {
+  //   await sqlQuest.none(userQueries.updateBankAccountDetails, [
+  //     GenericHelper.generateId(),
+  //     accountName,
+  //     accountNumber,
+  //     bankCode,
+  //     id,
+  //     bankName,
+  //   ]);
+  // };
 }

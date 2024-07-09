@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS "UserAccount";
+
+DROP TYPE IF EXISTS userType;

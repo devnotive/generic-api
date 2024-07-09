@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs';
 import z from 'zod';
 
 export const createUserValidator = z.object({
@@ -75,12 +75,12 @@ export const verifyOrganizationRepInfoValidator = z.object({
   staffLoanEligibility: z.boolean(),
 });
 
-export const verifyAccountValidator = z.object({
-  id: z.string(),
-  verificationType: z.nativeEnum(VerifyDocument),
-  document: z.string(),
-  env: z.string(),
-});
+// export const verifyAccountValidator = z.object({
+//   id: z.string(),
+//   verificationType: z.nativeEnum(VerifyDocument),
+//   document: z.string(),
+//   env: z.string(),
+// });
 
 export const loginValidator = z.object({
   email: z.string().email('This field must be a valid email address.'),
@@ -123,25 +123,25 @@ export const verifyUserBankAccountValidator = z.object({
   env: z.string(),
 });
 
-export const verifyCacDocument = z.object({
-  id: z.string(),
-  documentId: z.string(),
-  documentType: z.nativeEnum(CacDocumentType),
-  env: z.string(),
-});
+// export const verifyCacDocument = z.object({
+//   id: z.string(),
+//   documentId: z.string(),
+//   documentType: z.nativeEnum(CacDocumentType),
+//   env: z.string(),
+// });
 
-export const fetchTransactionHistoryValidator = z.object({
-  date: z.coerce
-    .date()
-    .optional()
-    .nullable()
-    .default(dayjs(new Date()).format('YYYY-MM-DD') as unknown as Date),
-  type: z.nativeEnum(TransactionType).optional().nullable(),
-  search: z.string().optional().nullable(),
-  status: z.nativeEnum(TransactionStatus).optional(),
-  page: z.coerce.number().optional(),
-  limit: z.coerce.number().optional(),
-});
+// export const fetchTransactionHistoryValidator = z.object({
+//   date: z.coerce
+//     .date()
+//     .optional()
+//     .nullable()
+//     .default(dayjs(new Date()).format('YYYY-MM-DD') as unknown as Date),
+//   type: z.nativeEnum(TransactionType).optional().nullable(),
+//   search: z.string().optional().nullable(),
+//   status: z.nativeEnum(TransactionStatus).optional(),
+//   page: z.coerce.number().optional(),
+//   limit: z.coerce.number().optional(),
+// });
 
 export type CreateUserValidator = typeof createUserValidator._type;
 export type VerifyPhoneNumberOtpValidator =
@@ -154,7 +154,7 @@ export type UpdateOrganizationContactInfoValidator =
   typeof updateOrganizationContactInfoValidator._type;
 export type VerifyOrganizationRepInfoValidator =
   typeof verifyOrganizationRepInfoValidator._type;
-export type VerifyAccountValidator = typeof verifyAccountValidator._type;
+// export type VerifyAccountValidator = typeof verifyAccountValidator._type;
 export type LoginValidator = typeof loginValidator._type;
 export type ForgotPasswordValidator = typeof forgotPasswordValidator._type;
 export type VerifyForgotPasswordOtpValidator =
@@ -168,11 +168,11 @@ export type VerifyIndividualContactInfoValidator =
   typeof verifyIndividualContactInfoValidator._type;
 export type VerifyOrganizationContactInfoValidator =
   typeof verifyOrganizationContactInfoValidator._type;
-export type VerifyAddressInfoValidator =
-  typeof verifyAddressInfoValidator._type;
-export type VerifyUserBankAccountValidator =
-  typeof verifyUserBankAccountValidator._type;
-export type VerifyCacDocument = typeof verifyCacDocument._type;
-export type FetchTransactionHistoryValidator = z.infer<
-  typeof fetchTransactionHistoryValidator
->;
+// export type VerifyAddressInfoValidator =
+//   typeof verifyAddressInfoValidator._type;
+// export type VerifyUserBankAccountValidator =
+//   typeof verifyUserBankAccountValidator._type;
+// export type VerifyCacDocument = typeof verifyCacDocument._type;
+// export type FetchTransactionHistoryValidator = z.infer<
+//   typeof fetchTransactionHistoryValidator
+// >;
