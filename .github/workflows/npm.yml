@@ -20,11 +20,6 @@ jobs:
 
     - name: Build
       run: |
-        cd generic-project-backend
-        git add .
-        git stash
-        git pull origin main
-        git stash pop
         npm install
         npm run build
         pm2 restart generic-project-backend
