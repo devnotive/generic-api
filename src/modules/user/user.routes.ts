@@ -3,23 +3,23 @@ import { ValidationMiddleware } from '../../shared/validators/middleware';
 import {
   createUserValidator,
   forgotPasswordValidator,
-  getUserNameSuggestionsValidator,
-  isUserNameAvailableValidator,
+  // getUserNameSuggestionsValidator,
+  // isUserNameAvailableValidator,
   loginValidator,
   resetPasswordValidator,
   sendPhoneNumberOtpValidator,
-  updateIndividualContactInfoValidator,
-  updateOrganizationContactInfoValidator,
-  verifyOrganizationRepInfoValidator,
-  verifyAccountValidator,
-  verifyAddressInfoValidator,
-  verifyCacDocument,
+  // updateIndividualContactInfoValidator,
+  // updateOrganizationContactInfoValidator,
+  // verifyOrganizationRepInfoValidator,
+  // verifyAccountValidator,
+  // verifyAddressInfoValidator,
+  // verifyCacDocument,
   verifyForgotPasswordOtpValidator,
-  verifyIndividualContactInfoValidator,
-  verifyOrganizationContactInfoValidator,
+  // verifyIndividualContactInfoValidator,
+  // verifyOrganizationContactInfoValidator,
   verifyPhoneNumberOtpValidator,
-  verifyUserBankAccountValidator,
-  fetchTransactionHistoryValidator,
+  // verifyUserBankAccountValidator,
+  // fetchTransactionHistoryValidator,
 } from './validation';
 import { tryCatch } from '../../shared/helpers';
 import { UserController } from './user.controller';
@@ -49,53 +49,53 @@ router.post(
   tryCatch(UserController.verifyPhoneNumberOtp),
 );
 
-router.post(
-  '/verify-individual-contact-info',
-  validateRequest(verifyIndividualContactInfoValidator),
-  tryCatch(UserController.verifyIndividualContactInfo),
-);
-
-router.post(
-  '/verify-address',
-  validateRequest(verifyAddressInfoValidator),
-  tryCatch(UserController.verifyAddressInfo),
-);
-
-router.put(
-  '/update-individual-contact-info',
-  validateRequest(updateIndividualContactInfoValidator),
-  tryCatch(UserController.updateIndividualContactInfo),
-);
-
-router.post(
-  `/verify-organization-contact-info`,
-  validateRequest(verifyOrganizationContactInfoValidator),
-  tryCatch(UserController.verifyOrganizationContactInfo),
-);
-
-router.post(
-  `/verify-organization-rep-info`,
-  validateRequest(verifyOrganizationRepInfoValidator),
-  tryCatch(UserController.verifyOrganizationRepInfo),
-);
-
-router.put(
-  `/update-organization-contact-info`,
-  validateRequest(updateOrganizationContactInfoValidator),
-  tryCatch(UserController.updateOrganizationContactInfo),
-);
-
-router.post(
-  '/verify-user-documents',
-  validateRequest(verifyAccountValidator),
-  tryCatch(UserController.verifyAccountDocuments),
-);
-
-router.put(
-  '/update-user-documents',
-  validateRequest(verifyAccountValidator),
-  tryCatch(UserController.updateAccountDocuments),
-);
+// router.post(
+//   '/verify-individual-contact-info',
+//   validateRequest(verifyIndividualContactInfoValidator),
+//   tryCatch(UserController.verifyIndividualContactInfo),
+// );
+//
+// router.post(
+//   '/verify-address',
+//   validateRequest(verifyAddressInfoValidator),
+//   tryCatch(UserController.verifyAddressInfo),
+// );
+//
+// router.put(
+//   '/update-individual-contact-info',
+//   validateRequest(updateIndividualContactInfoValidator),
+//   tryCatch(UserController.updateIndividualContactInfo),
+// );
+//
+// router.post(
+//   `/verify-organization-contact-info`,
+//   validateRequest(verifyOrganizationContactInfoValidator),
+//   tryCatch(UserController.verifyOrganizationContactInfo),
+// );
+//
+// router.post(
+//   `/verify-organization-rep-info`,
+//   validateRequest(verifyOrganizationRepInfoValidator),
+//   tryCatch(UserController.verifyOrganizationRepInfo),
+// );
+//
+// router.put(
+//   `/update-organization-contact-info`,
+//   validateRequest(updateOrganizationContactInfoValidator),
+//   tryCatch(UserController.updateOrganizationContactInfo),
+// );
+//
+// router.post(
+//   '/verify-user-documents',
+//   validateRequest(verifyAccountValidator),
+//   tryCatch(UserController.verifyAccountDocuments),
+// );
+//
+// router.put(
+//   '/update-user-documents',
+//   validateRequest(verifyAccountValidator),
+//   tryCatch(UserController.updateAccountDocuments),
+// );
 
 // Login
 router.post(
@@ -123,38 +123,38 @@ router.post(
   validateRequest(resetPasswordValidator),
   tryCatch(UserController.resetPassword),
 );
+//
+// router.get(
+//   '/username-is-available',
+//   validateRequest(isUserNameAvailableValidator),
+//   tryCatch(UserController.checkIfUserNameIsAvailable),
+// );
+//
+// router.get(
+//   '/username-suggestions',
+//   validateRequest(getUserNameSuggestionsValidator),
+//   tryCatch(UserController.getUserNameSuggestions),
+// );
+//
+// router.get('/get-banks', tryCatch(UserController.getBanks));
+//
+// router.post(
+//   '/verify-bank-account',
+//   validateRequest(verifyUserBankAccountValidator),
+//   tryCatch(UserController.verifyUserBankAccount),
+// );
 
-router.get(
-  '/username-is-available',
-  validateRequest(isUserNameAvailableValidator),
-  tryCatch(UserController.checkIfUserNameIsAvailable),
-);
-
-router.get(
-  '/username-suggestions',
-  validateRequest(getUserNameSuggestionsValidator),
-  tryCatch(UserController.getUserNameSuggestions),
-);
-
-router.get('/get-banks', tryCatch(UserController.getBanks));
-
-router.post(
-  '/verify-bank-account',
-  validateRequest(verifyUserBankAccountValidator),
-  tryCatch(UserController.verifyUserBankAccount),
-);
-
-router.post(
-  '/verify-cac-document',
-  validateRequest(verifyCacDocument),
-  tryCatch(UserController.verifyOrganizationCacDocument),
-);
-
-router.get(
-  '/transaction-history',
-  tokenGuard,
-  validateRequest(fetchTransactionHistoryValidator),
-  tryCatch(UserController.fetchTransactionHistory),
-);
+// router.post(
+//   '/verify-cac-document',
+//   validateRequest(verifyCacDocument),
+//   tryCatch(UserController.verifyOrganizationCacDocument),
+// );
+//
+// router.get(
+//   '/transaction-history',
+//   tokenGuard,
+//   validateRequest(fetchTransactionHistoryValidator),
+//   tryCatch(UserController.fetchTransactionHistory),
+// );
 
 export const userRouter = router;

@@ -4,6 +4,12 @@ import Logger from '../../../config/logger';
 import { userQueries } from '../queries';
 import {
   CreateUserValidator,
+  ForgotPasswordValidator,
+  LoginValidator,
+  ResetPasswordValidator,
+  SendPhoneNumberOtpValidator,
+  VerifyForgotPasswordOtpValidator,
+  VerifyPhoneNumberOtpValidator,
   // UpdateIndividualContactInfoValidator,
   // UpdateOrganizationContactInfoValidator,
   // VerifyOrganizationRepInfoValidator,
@@ -18,13 +24,18 @@ import // CacDocumentType,
 // OnboardingVerifiedStatus,
 // VerifyDocument,
 '../../../shared/enums';
+import Env from '../../../shared/utils/env';
+import { UserRepository } from '../repository';
+import { StatusCodes } from 'http-status-codes';
 // import { VerifyMeService } from '../../../shared/services/verifyme/verifyme';
 // import { HttpService } from '../../../shared/services/http';
-// import { ApiError } from '../../../shared/utils/api.error';
+import { ApiError } from '../../../shared/utils/api.error';
+import { UserAccountDTO } from '../../../shared/types/user/userAccount';
 // import { PayStackService } from '../../../shared/services/paystack/paystack';
+import * as jwt from 'jsonwebtoken';
 
 const _logger = new Logger('User.Repository');
-export class UserRepository {
+export class UserService {
   static checkIfUserExists = async (
     email: string,
     phoneNumber: string,
@@ -45,41 +56,130 @@ export class UserRepository {
     }
   };
 
-  static createUser = async (
-    request: CreateUserValidator,
-  ): Promise<UserAccount> => {
+  static createUser = async (request: CreateUserValidator): Promise<any> => {
     try {
-      const { fullName, userName, email, phoneNumber, password } = request;
-      const id = GenericHelper.generateId();
-
-      const user = await sqlQuest.one(userQueries.createUserAccount, [
-        id,
-        fullName,
-        userName,
+      const { email, phoneNumber, userName } = request;
+      const userExists = await UserRepository.checkIfUserExists(
         email,
         phoneNumber,
-        password,
-      ]);
+        userName,
+      );
+      if (userExists) {
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          'User with email or phone number or user name already exists',
+        );
+      }
 
+      const { password } = request;
+      const { hashedText } = await GenericHelper.hashText(
+        password,
+        Env.get('SALT_ROUNDS'),
+      );
+
+      request.password = hashedText;
+
+      const user = await UserRepository.createUser(request);
       return user;
     } catch (err) {
       _logger.error(
-        '[UserRepository]::Something went wrong when creating a user',
+        '[UserService]::Something went wrong when creating a user',
         err,
       );
       throw err;
     }
   };
 
-  static storeOtp = async (userId: string, otp: string): Promise<void> => {
+  static sendPhoneNumberOtp = async (
+    request: SendPhoneNumberOtpValidator,
+  ): Promise<any> => {
     try {
-      await sqlQuest.none(userQueries.storeOtp, [userId, otp]);
-      return;
+      const { phoneNumber } = request;
+      const user = await UserRepository.getUserByPhoneNumber(phoneNumber);
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+      }
+
+      const otp = GenericHelper.generateRandomNumber(6);
+      const hashedOtp = GenericHelper.hashOtp(otp, Env.get('SECRET'), '2m');
+      await UserRepository.storeOtp(user.id, hashedOtp);
+      return { otp, id: user.id };
     } catch (err) {
       _logger.error(
-        '[UserRepository]::Something went wrong when storing otp',
-        err,
+        '[UserService]::Something went wrong when sending phone number otp',
       );
+      throw err;
+    }
+  };
+  static verifyPhoneNumberOtp = async (
+    request: VerifyPhoneNumberOtpValidator,
+  ): Promise<UserAccountDTO> => {
+    try {
+      const { phoneNumber, otp } = request;
+      const user = await UserRepository.getUserByPhoneNumber(phoneNumber);
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+      }
+
+      const isOtpValid = GenericHelper.verifyOtp(
+        otp,
+        user.otp as string,
+        Env.get('SECRET'),
+      );
+      if (!isOtpValid) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid OTP');
+      }
+      return user;
+    } catch (err) {
+      _logger.error(
+        '[UserService]::Something went wrong when verifying phone number otp',
+      );
+      throw err;
+    }
+  };
+
+  static login = async (request: LoginValidator): Promise<any> => {
+    try {
+      const { email, password } = request;
+      const user = await UserRepository.getUserByEmail(email);
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+      }
+
+      const isPasswordValid = await GenericHelper.compareHash(
+        password,
+        user.password as string,
+      );
+      if (!isPasswordValid) {
+        throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid password');
+      }
+
+      const token = jwt.sign(
+        {
+          id: user.id,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          userName: user.userName,
+          fullName: user.fullName,
+          userType: user.userType,
+          hasVerifiedPhoneNumber: user.hasVerifiedPhoneNumber,
+          hasVerifiedContact: user.hasVerifiedContact,
+          hasVerifiedNin: user.hasVerifiedNin,
+          hasVerifiedDriversLicense: user.hasVerifiedDriversLicense,
+          hasVerifiedPassport: user.hasVerifiedPassport,
+          hasVerifiedBankAccount: user.hasVerifiedBankAccount,
+          hasVerifiedBvn: user.hasVerifiedBvn,
+          hasVerifiedAddress: user.hasVerifiedAddress,
+          hasVerifiedCac: user.hasVerifiedCac,
+        },
+        Env.get('SECRET') as string,
+        { expiresIn: '1d', algorithm: 'HS256' },
+      );
+
+      const { password: _, ...userDetails } = user;
+      return { ...userDetails, token };
+    } catch (err) {
+      _logger.error('[UserService]::Something went wrong when logging in');
       throw err;
     }
   };
@@ -92,53 +192,6 @@ export class UserRepository {
     } catch (err) {
       _logger.error(
         '[UserRepository]::Something went wrong when getting user by id',
-        err,
-      );
-      throw err;
-    }
-  };
-
-  static getUserByPhoneNumber = async (
-    phoneNumber: string,
-  ): Promise<UserAccount> => {
-    try {
-      const user = await sqlQuest.oneOrNone(userQueries.getUserByPhoneNumber, [
-        phoneNumber,
-      ]);
-      return user;
-    } catch (err) {
-      _logger.error(
-        '[UserRepository]::Something went wrong when getting user by phone number',
-        err,
-      );
-      throw err;
-    }
-  };
-
-  static getUserByEmail = async (email: string): Promise<UserAccount> => {
-    try {
-      const user = await sqlQuest.oneOrNone(userQueries.getUserByEmail, [
-        email,
-      ]);
-      return user;
-    } catch (err) {
-      _logger.error(
-        '[UserRepository]::Something went wrong when getting user by email',
-        err,
-      );
-      throw err;
-    }
-  };
-
-  static getUserByUserName = async (userName: string): Promise<UserAccount> => {
-    try {
-      const user = await sqlQuest.oneOrNone(userQueries.getUserByUserName, [
-        userName,
-      ]);
-      return user;
-    } catch (err) {
-      _logger.error(
-        '[UserRepository]::Something went wrong when getting user by userName',
         err,
       );
       throw err;
@@ -478,14 +531,76 @@ export class UserRepository {
   //   }
   // };
   //
-  static resetPassword = async (id: string, hashedPassword: string) => {
+  static forgotPassword = async (
+    request: ForgotPasswordValidator,
+  ): Promise<any> => {
     try {
-      await sqlQuest.none(userQueries.resetPassword, [id, hashedPassword]);
+      const { email } = request;
+      const user = await UserRepository.getUserByEmail(email);
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+      }
+
+      const otp = GenericHelper.generateRandomNumber(6);
+      const hashedOtp = GenericHelper.hashOtp(otp, Env.get('SECRET'), '2m');
+      await UserRepository.storeOtp(user.id, hashedOtp);
+      return { otp, id: user.id };
+    } catch (err) {
+      _logger.error('[UserService]::Something went wrong when forgot password');
+      throw err;
+    }
+  };
+
+  static resetPassword = async (
+    request: ResetPasswordValidator,
+  ): Promise<any> => {
+    try {
+      const { email, password } = request;
+      const { hashedText } = await GenericHelper.hashText(
+        password,
+        Env.get('SALT_ROUNDS'),
+      );
+
+      const user = await UserRepository.getUserByEmail(email);
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+      }
+
+      await UserRepository.resetPassword(user.id, hashedText);
+
       return;
     } catch (err) {
       _logger.error(
-        '[UserRepository]::Something went wrong when resetting password',
-        err,
+        '[UserService]::Something went wrong when resetting password',
+      );
+      throw err;
+    }
+  };
+  static verifyForgotPasswordOtp = async (
+    request: VerifyForgotPasswordOtpValidator,
+  ): Promise<any> => {
+    try {
+      const { email, otp } = request;
+      const user = await UserRepository.getUserByEmail(email);
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+      }
+
+      const isOtpValid = GenericHelper.verifyOtp(
+        otp,
+        user.otp as string,
+        Env.get('SECRET'),
+      );
+      if (!isOtpValid) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid OTP');
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { otp: _, ...userDetails } = user;
+      return userDetails;
+    } catch (err) {
+      _logger.error(
+        '[UserService]::Something went wrong when verifying forgot password otp',
       );
       throw err;
     }

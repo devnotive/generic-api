@@ -1,5 +1,3 @@
-CREATE TYPE userType AS ENUM ('individual', 'organization');
-
 CREATE TABLE IF NOT EXISTS "UserAccount" (
     "id" VARCHAR PRIMARY KEY,
     "fullName" VARCHAR(255) NOT NULL,
@@ -8,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "UserAccount" (
     "phoneNumber" VARCHAR(255) NOT NULL,
     "password" VARCHAR(255) NOT NULL,
 --     "userType" userType NOT NULL,
-    "otp" TYPE VARCHAR(255),
+    "otp" VARCHAR(255),
 --     "contactAddress" VARCHAR(255),
 --     "bankName" VARCHAR(255),
 --     "bvnNumber" VARCHAR(255),

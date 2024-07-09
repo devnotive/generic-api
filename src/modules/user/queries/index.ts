@@ -3,9 +3,9 @@ SELECT * FROM "UserAccount" WHERE LOWER("email") = LOWER($1) OR "phoneNumber" = 
 `;
 
 const createUserAccount = `
-INSERT INTO "UserAccount" ("id", "fullName", "userName", "email", "phoneNumber", "password", "userType")
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING "id", "fullName", "userName", "email", "phoneNumber", "userType", "createdAt";
+INSERT INTO "UserAccount" ("id", "fullName", "userName", "email", "phoneNumber", "password")
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING "id", "fullName", "userName", "email", "phoneNumber", "createdAt";
 `;
 
 const storeOtp = `
@@ -13,121 +13,117 @@ UPDATE "UserAccount" SET "otp" = $2 WHERE "id" = $1;
 `;
 
 const getUserById = `SELECT 
-"id", "fullName", "userName", "email", "phoneNumber", "userType", "otp", "createdAt",
-"hasVerifiedPhoneNumber","hasVerifiedContact","hasVerifiedNin", "hasVerifiedDriversLicense","hasVerifiedPassport",
-"hasVerifiedBankAccount","hasVerifiedBvn","hasVerifiedAddress","hasVerifiedCac"
+"id", "fullName", "userName", "email", "phoneNumber", "otp", "createdAt"
 FROM "UserAccount" WHERE "id" = $1;`;
 
-const getUserByPhoneNumber = `SELECT "id", "fullName", "userName", "email", "phoneNumber", "userType", "otp", "createdAt" FROM "UserAccount" WHERE "phoneNumber" = $1;`;
+const getUserByPhoneNumber = `SELECT "id", "fullName", "userName", "email", "phoneNumber", "otp", "createdAt" FROM "UserAccount" WHERE "phoneNumber" = $1;`;
 
 const getUserByEmail = `
-SELECT "id", "fullName", "userName", "password", "email", "phoneNumber", "userType", "createdAt", "otp",
-"hasVerifiedPhoneNumber","hasVerifiedContact","hasVerifiedNin", "hasVerifiedDriversLicense","hasVerifiedPassport",
-"hasVerifiedBankAccount","hasVerifiedBvn","hasVerifiedAddress","hasVerifiedCac"
+SELECT "id", "fullName", "userName", "password", "email", "phoneNumber", "createdAt", "otp"
 FROM "UserAccount" WHERE LOWER("email") = LOWER($1);`;
 
-const updateOnboardingVerificationStatus = `
-UPDATE "UserAccount"
-SET 
-    "hasVerifiedPhoneNumber" = CASE 
-                                    WHEN $2 = 'phone number' THEN TRUE
-                                    ELSE "hasVerifiedPhoneNumber"
-                                END,
-    "hasVerifiedContact" = CASE 
-                                WHEN $2 = 'contact' THEN TRUE
-                                ELSE "hasVerifiedContact"
-                            END,
-    "hasVerifiedNin" = CASE 
-                            WHEN $2 = 'nin' THEN TRUE
-                            ELSE "hasVerifiedNin"
-                        END,
-    "hasVerifiedDriversLicense" = CASE 
-                                        WHEN $2 = 'drivers license' THEN TRUE
-                                        ELSE "hasVerifiedDriversLicense"
-                                    END,
-    "hasVerifiedPassport" = CASE 
-                                WHEN $2 = 'passport' THEN TRUE
-                                ELSE "hasVerifiedPassport"
-                            END,
-    "hasVerifiedBankAccount" = CASE 
-                                WHEN $2 = 'bank account' THEN TRUE
-                                ELSE "hasVerifiedBankAccount"
-                            END,
-    "hasVerifiedBvn" = CASE 
-                                WHEN $2 = 'bvn' THEN TRUE
-                                ELSE "hasVerifiedBvn"
-                            END,
-    "hasVerifiedAddress" = CASE 
-                                WHEN $2 = 'address' THEN TRUE
-                                ELSE "hasVerifiedAddress"
-                            END,
-    "hasVerifiedCac" = CASE 
-                                WHEN $2 = 'cac' THEN TRUE
-                                ELSE "hasVerifiedCac"
-                            END
-WHERE "id" = $1
-RETURNING "id", "fullName", "userName", "email", "phoneNumber", "userType", "otp", "createdAt",
-"hasVerifiedPhoneNumber","hasVerifiedContact","hasVerifiedNin", "hasVerifiedDriversLicense","hasVerifiedPassport",
-"hasVerifiedBankAccount","hasVerifiedBvn","hasVerifiedAddress","hasVerifiedCac";
-`;
+// const updateOnboardingVerificationStatus = `
+// UPDATE "UserAccount"
+// SET
+//     "hasVerifiedPhoneNumber" = CASE
+//                                     WHEN $2 = 'phone number' THEN TRUE
+//                                     ELSE "hasVerifiedPhoneNumber"
+//                                 END,
+//     "hasVerifiedContact" = CASE
+//                                 WHEN $2 = 'contact' THEN TRUE
+//                                 ELSE "hasVerifiedContact"
+//                             END,
+//     "hasVerifiedNin" = CASE
+//                             WHEN $2 = 'nin' THEN TRUE
+//                             ELSE "hasVerifiedNin"
+//                         END,
+//     "hasVerifiedDriversLicense" = CASE
+//                                         WHEN $2 = 'drivers license' THEN TRUE
+//                                         ELSE "hasVerifiedDriversLicense"
+//                                     END,
+//     "hasVerifiedPassport" = CASE
+//                                 WHEN $2 = 'passport' THEN TRUE
+//                                 ELSE "hasVerifiedPassport"
+//                             END,
+//     "hasVerifiedBankAccount" = CASE
+//                                 WHEN $2 = 'bank account' THEN TRUE
+//                                 ELSE "hasVerifiedBankAccount"
+//                             END,
+//     "hasVerifiedBvn" = CASE
+//                                 WHEN $2 = 'bvn' THEN TRUE
+//                                 ELSE "hasVerifiedBvn"
+//                             END,
+//     "hasVerifiedAddress" = CASE
+//                                 WHEN $2 = 'address' THEN TRUE
+//                                 ELSE "hasVerifiedAddress"
+//                             END,
+//     "hasVerifiedCac" = CASE
+//                                 WHEN $2 = 'cac' THEN TRUE
+//                                 ELSE "hasVerifiedCac"
+//                             END
+// WHERE "id" = $1
+// RETURNING "id", "fullName", "userName", "email", "phoneNumber", "userType", "otp", "createdAt",
+// "hasVerifiedPhoneNumber","hasVerifiedContact","hasVerifiedNin", "hasVerifiedDriversLicense","hasVerifiedPassport",
+// "hasVerifiedBankAccount","hasVerifiedBvn","hasVerifiedAddress","hasVerifiedCac";
+// `;
 
-const updateIndividualContactInfo = `
-UPDATE "UserAccount"
-SET 
-    "streetName" = $2,
-    "lgaName" = $3,
-    "stateName" = $4,
-    "bankName" = $5,
-    "bvnNumber" = $6,
-    "accountNumber" = $7
-    
-WHERE "id" = $1;
-`;
+// const updateIndividualContactInfo = `
+// UPDATE "UserAccount"
+// SET
+//     "streetName" = $2,
+//     "lgaName" = $3,
+//     "stateName" = $4,
+//     "bankName" = $5,
+//     "bvnNumber" = $6,
+//     "accountNumber" = $7
+//
+// WHERE "id" = $1;
+// `;
 
-const updateOrganizationContactInfo = `
-UPDATE "UserAccount"
-SET 
-    "streetName" = $2,
-    "lgaName" = $3,
-    "stateName" = $4,
-    "rcNumber" = $5,
-    "bnNumber" = $6,
-    "bankName" = $7,
-    "accountNumber" = $8,
-WHERE "id" = $1;
-`;
+// const updateOrganizationContactInfo = `
+// UPDATE "UserAccount"
+// SET
+//     "streetName" = $2,
+//     "lgaName" = $3,
+//     "stateName" = $4,
+//     "rcNumber" = $5,
+//     "bnNumber" = $6,
+//     "bankName" = $7,
+//     "accountNumber" = $8,
+// WHERE "id" = $1;
+// `;
 
-const updateOrganizationRepInfo = `
-UPDATE "UserAccount"
-SET 
-    "authorizedRepName" = $2,
-    "officialEmailAddress" = $3,
-    "staffLoanEligibility" =$4
-WHERE "id" = $1;
-SELECT * FROM "UserAccount" WHERE "id"=$1;
-`;
+// const updateOrganizationRepInfo = `
+// UPDATE "UserAccount"
+// SET
+//     "authorizedRepName" = $2,
+//     "officialEmailAddress" = $3,
+//     "staffLoanEligibility" =$4
+// WHERE "id" = $1;
+// SELECT * FROM "UserAccount" WHERE "id"=$1;
+// `;
 
-const updateUserDocuments = `
-UPDATE "UserAccount"
-SET 
-    "ninId" = CASE 
-                WHEN $2 = 'nin' THEN $3
-                ELSE "ninId"
-              END,
-    "driversLicenseId" = CASE 
-                            WHEN $2 = 'drivers license' THEN $3
-                            ELSE "driversLicenseId"
-                          END,
-    "passportId" = CASE 
-                        WHEN $2 = 'passport' THEN $3
-                        ELSE "passportId"
-                    END,
-    "bvnNumber" = CASE 
-                        WHEN $2 = 'bvn' THEN $3
-                        ELSE "bvnNumber"
-                    END
-WHERE "id" = $1;
-`;
+// const updateUserDocuments = `
+// UPDATE "UserAccount"
+// SET
+//     "ninId" = CASE
+//                 WHEN $2 = 'nin' THEN $3
+//                 ELSE "ninId"
+//               END,
+//     "driversLicenseId" = CASE
+//                             WHEN $2 = 'drivers license' THEN $3
+//                             ELSE "driversLicenseId"
+//                           END,
+//     "passportId" = CASE
+//                         WHEN $2 = 'passport' THEN $3
+//                         ELSE "passportId"
+//                     END,
+//     "bvnNumber" = CASE
+//                         WHEN $2 = 'bvn' THEN $3
+//                         ELSE "bvnNumber"
+//                     END
+// WHERE "id" = $1;
+// `;
 
 const resetPassword = `
 UPDATE "UserAccount" SET "password" = $2 WHERE "id" = $1;
@@ -240,11 +236,11 @@ export const userQueries = {
   getUserByPhoneNumber,
   getUserByEmail,
   getUserByUserName,
-  updateOnboardingVerificationStatus,
-  updateIndividualContactInfo,
-  updateOrganizationContactInfo,
-  updateOrganizationRepInfo,
-  updateUserDocuments,
+  // updateOnboardingVerificationStatus,
+  // updateIndividualContactInfo,
+  // updateOrganizationContactInfo,
+  // updateOrganizationRepInfo,
+  // updateUserDocuments,
   resetPassword,
   getUserNameSuggestions,
   updateBankAccountDetails,
