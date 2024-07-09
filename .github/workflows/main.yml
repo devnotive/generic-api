@@ -5,17 +5,17 @@ on:
 jobs:
     build:
       runs-on: ubuntu-latest
-        strategy:
-          matrix:
+      strategy:
+        matrix:
             node-version: [14.x, 16.x, 18.x]
-        script: |
-          cd generic-project-backend
-          git add .
-          git stash
-          git pull origin main
-          git stash pop
-          npm install
-          npm run build
-          pm2 restart generic-project-backend
+            script: |
+              cd generic-project-backend
+              git add .
+              git stash
+              git pull origin main
+              git stash pop
+              npm install
+              npm run build
+              pm2 restart generic-project-backend
 
 
