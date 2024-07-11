@@ -1,15 +1,15 @@
 {
     "development":{
-        "ENV": "GENERIC_PROJECT_DATABASE_URL"
+        "ENV": "GENERIC_API_DATABASE_URL"
     },
     "staging": {
-        "ENV": "GENERIC_PROJECT_DATABASE_URL"
+        "ENV": "GENERIC_API_DATABASE_URL"
     },
     "production":{
-        "ENV": "GENERIC_PROJECT_DATABASE_URL"
+        "ENV": "GENERIC_API_DATABASE_URL"
     },
     "defaultEnv":{
-        "ENV": "GENERIC_PROJECT_NODE_ENV"
+        "ENV": "GENERIC_API_NODE_ENV"
     },
     "sql-file": true
 }

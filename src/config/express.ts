@@ -29,7 +29,7 @@ export default function App(): Express {
   app.disable('x-powered-by');
   app.use(ROUTES.V1_PATH, Router);
   app.get('/', (_: Request, res: Response) => {
-    res.send('Generic Project Express + TypeScript Server');
+    res.send('Generic Api Express + TypeScript Server');
   });
 
   app.use(ApiError.appError);

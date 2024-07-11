@@ -4,7 +4,7 @@ import Env from '../../../shared/utils/env';
 import { apiConstants } from '../../utils/constants';
 
 const key = Env.get('SENDGRID_API_KEY');
-const genericProjectEmail = Env.get('SENDGRID_EMAIL');
+const genericApiEmail = Env.get('SENDGRID_EMAIL');
 const { __test__ } = apiConstants;
 sgMail.setApiKey(key);
 
@@ -23,7 +23,7 @@ export class EmailServices {
    * @returns {Promise<object | string>}
    */
   static send({ recepient, name = '', subject, emailContent }: SendMailProps) {
-    console.log({ genericProjectEmail });
+    console.log({ genericApiEmail });
     const url = 'https://api.sendgrid.com/v3/mail/send';
 
     const headers = {
@@ -39,10 +39,10 @@ export class EmailServices {
         },
       ],
       content: [{ type: 'text/html', value: emailContent }],
-      from: { email: genericProjectEmail, name: 'Generic Project' },
+      from: { email: genericApiEmail, name: 'Generic Api' },
       reply_to: {
-        email: genericProjectEmail,
-        name: 'Generic Project',
+        email: genericApiEmail,
+        name: 'Generic Api',
       },
     };
 

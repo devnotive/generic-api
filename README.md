@@ -3,7 +3,7 @@ An API template in nodejs/typescript with sign up and login already setup.
 
 ## Setup
 
-Begin by including .idea in .gitignore
+Begin by uncommenting .idea and .env in .gitignore
 
 Make sure to install the dependencies:
 
